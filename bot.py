@@ -16,14 +16,6 @@ async def copy(ctx, *, arg):
     await ctx.send(arg)
 
 @bot.command()
-async def add(ctx, a: int, b: int):
-    await ctx.send(a+b)
-
-@bot.command()
-async def multiply(ctx, a: int, b: int):
-    await ctx.send(a*b)
-
-@bot.command()
 async def hello(ctx):
     await ctx.send(":smiley: :wave: Привет!")
 
@@ -38,11 +30,8 @@ async def say(ctx, channel : discord.TextChannel, *args):
         text = text + item + ' '
     await channel.send(text)
 @bot.command()
-async def callsiniy(message):
- await message.channel.send("<@309299318337044483>")
-@bot.command()
 async def help(message):
- await message.channel.send("Список доступных команд: \n**cnb_info** - получение информации по игре Камень, Ножницы, Бумага!\n**help** - список команд\n**copy** - повторить ваше сообщение\n**add** - cчитает сумму из двух чисел\n**multiply** - умножает два числа\n**say** - написать сообщение в #канал -место текста- \n**hello** - поздоровается с тобой")
+ await message.channel.send("Список доступных команд: \n**cnb_info** - получение информации по игре Камень, Ножницы, Бумага!\n**help** - список команд\n**copy** - повторить ваше сообщение\n**say** - написать сообщение в #канал -место текста-")
 import typing
 
 @bot.command()
