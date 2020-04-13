@@ -11,88 +11,121 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+class CommandWithCooldown(commands.Command):
+    async def prepare(self, message):
+        try:
+            return await super().prepare(message)
+        except commands.CommandOnCooldown:
+            await message.channel.send('Подождите 30 секунд прежде чем использовать команду снова!')
 
-
-@bot.command()
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(5, 30, commands.BucketType.user)
 async def copy(ctx,*, txt=None):
     if txt==None:
-        await ctx.send('Введите сообщение которое бот должен повторить!')
+        await ctx.send('''
+**Информация о команде:** !copy
+Повторю сообщение которое вы написали, при этом удаляя его!
+**Пример использования команды:**
+`!copy Привет!`
+''')
     else:
         await ctx.message.delete()
         await ctx.send(txt)
 
-@bot.command()
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(2, 30, commands.BucketType.user)
 async def hello(message):
     id = message.author.id
     ping = "<@"+str(id)+">"
-    await message.channel.send(":smiley: :wave: Привет," + ping + '!')
+    await message.channel.send(":smiley: :wave: Привет ," + ping + '!')
 
-@bot.command()
-async def say(ctx, channel : discord.TextChannel, *args):
-    await ctx.message.delete()
-    if not args:
-        await ctx.send('Необходимо ввести текст сообщения')
-        return
-    text = ' '
-    for item in args:
-        text = text + item + ' '
-    await channel.send(text)
 
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(3, 30, commands.BucketType.user)
+async def say(message, channel : discord.TextChannel, *args,):
+    if not channel or not args:
+        await message.channel.send("""
+**Информация по команде: **!say
+Команда используемая для отправки указанного вами сообщения от **моего электронного лица** в указанный вами канал.
+**Пример использования команды:**
+`!say #канал-для-приветов Привет! `
+""")
+    else:
+        await message.message.delete()
+        text = ' '
+        for item in args:
+            text = text + item + ' '
+        await channel.send(text)
 @bot.command()
 async def help(message):
-    embed = discord.Embed(title= 'Siniy Bot', description= 'Ботик - Котик\nCписок доступных **основных** команд:', color=0xeee657)
-    embed.add_field(name="**!cnb_info**", value= 'Получение информации по игре "Камень, Ножницы, Бумага!"', inline=False)
-    embed.add_field(name="**!copy**", value= 'Повторить ваше сообщение', inline=False)
-    embed.add_field(name="**!say**", value= 'Написать сообщение в #канал  "Tекст" ', inline=False)
-    embed.add_field(name="**!hello**", value= 'Поздороватся с Ботом', inline=False)
+    embed = discord.Embed(title= 'Siniy Bot', description= 'Cписок доступных **основных** команд:', color=0xeee657)
+    embed.add_field(name="**!copy**", value= 'Для получения информации о команде введите !copy', inline=False)
+    embed.add_field(name="**!say**", value= 'Для получения информации о команде введите !say ', inline=False)
+    embed.add_field(name="**!hello**", value= 'При вызове команды я с вами поздороваюсь :3', inline=False)
     embed.add_field(name="**!moder_help**", value= 'Пока недоступно', inline=False)
-    embed.add_field(name="**!ball**", value= 'Задать боту вопрос, ответом на который будет да/нет', inline=False)
-    embed.add_field(name="**!tryy**", value= 'Написать действие которые будет выполнено (**Удачно | Неудачно**)', inline=False)
-    embed.add_field(name="**!roll**", value= 'Рандомайзер чисел от x до y', inline=False)
+    embed.add_field(name="**!ball**", value= 'Для получения информации о команде введите !ball', inline=False)
+    embed.add_field(name="**!tryy**", value= 'Для получения информации о команде введите !tryy', inline=False)
+    embed.add_field(name="**!roll**", value= 'Для получения информации о команде введите !roll', inline=False)
     embed.add_field(name="**Invite**", value= '[Invite Link]<https://discordapp.com/oauth2/authorize?client_id=696050756947673108&scope=bot&permissions=7232>', inline=False)
     await message.channel.send(embed=embed)
-@bot.command()
-async def cnb_info(message):
-    await message.channel.send("""Для начала игры напиши:
-!cnb (1-3)
-1- Камень, 2-Ножницы , 3-Бумага""")
 
 from random import randint
-@bot.command()
-async def cnb(message, y:int):
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(10, 30, commands.BucketType.user)
+async def cnb(message, yy = None):
     x= randint(1, 3)
-#lose
-    if x == 1 and y == 2:
-         await message.channel.send("Ножцницы vs Камня! Ты проиграл!")
-    elif x == 2 and y == 3:
-        await message.channel.send("Бумага vs Ножниц! Ты проиграл!")
-    elif x == 3 and y == 1:
-        await message.channel.send("Камень vs Бумаги! Ты проиграл!")
-#won
-    elif x == 2 and y == 1:
-        await message.channel.send("Камень vs Ножниц! Ты победил!")
-    elif x == 3 and y == 2:
-        await message.channel.send("Ножницы vs Бумаги! Ты победил!")
-    elif x == 1 and y == 3:
-        await message.channel.send("Бумага vs Камня! Ты победил!")
- #draw
-    elif x == 1 and y == 1:
-        await message.channel.send("Камень vs Камня! Ничья!")
-    elif x == 2 and y == 2:
-        await message.channel.send("Ножницы vs Ножниц! Ничья!")
-    elif x == 3 and y == 3:
-        await message.channel.send("Бумага vs Бумаги! Ничья!")
+    if yy == None or yy!= '1' or yy!= '2' or yy!= '3':
+         await message.channel.send("""
+**Информация по команде: **!cnb
+Это классическая игра "Камень, Ножницы, Бумага!"
+Для начала игры выберите одну из цифр: 1 , 2 или 3.
+1- Камень, 2-Ножницы , 3-Бумага
+**Пример использования команды:**
+`!cnb 1`
+**Пример ответа:**
+Камень vs Бумаги! Ты проиграл!     
+""")
     else:
-        await message.channel.send("Введите число от одного то трёх!")
+        y= int(yy)
+    #lose
+        if x == 1 and y == 2:
+            await message.channel.send("Ножцницы vs Камня! Ты проиграл!")
+        elif x == 2 and y == 3:
+            await message.channel.send("Бумага vs Ножниц! Ты проиграл!")
+        elif x == 3 and y == 1:
+            await message.channel.send("Камень vs Бумаги! Ты проиграл!")
+    #won
+        elif x == 2 and y == 1:
+            await message.channel.send("Камень vs Ножниц! Ты победил!")
+        elif x == 3 and y == 2:
+            await message.channel.send("Ножницы vs Бумаги! Ты победил!")
+        elif x == 1 and y == 3:
+            await message.channel.send("Бумага vs Камня! Ты победил!")
+    #draw
+        elif x == 1 and y == 1:
+            await message.channel.send("Камень vs Камня! Ничья!")
+        elif x == 2 and y == 2:
+            await message.channel.send("Ножницы vs Ножниц! Ничья!")
+        elif x == 3 and y == 3:
+            await message.channel.send("Бумага vs Бумаги! Ничья!")
 
 from random import randint
-@bot.command()
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(6, 30, commands.BucketType.user)
 async def ball(message,*, soob=None):
     x = randint(1, 10)
     id = message.author.id
     ping = "<@"+str(id)+">"
     if soob==None:
-        await message.channel.send(ping+', напишите свой вопрос!:8ball:')
+        await message.channel.send("""
+**Информация по команде: **!ball
+Типичный шарлатанский шарик встряхивая который вы получаете ответ на свой вопрос.
+Задавать вопрос нужно так, что бы я мог ответить: Да / Нет
+**Пример использования команды:**
+`!ball Я котик?`
+**Пример ответа:**
+**Siniy**, черт возьми! Да! Так оно и есть!:8ball:
+""")
     elif x==1:
         await  message.channel.send(ping + ', абсолютно верно:8ball:')
     elif x==2:
@@ -112,25 +145,44 @@ async def ball(message,*, soob=None):
     elif x==9:
         await message.channel.send(ping + ', у вас все в порядке?С такими вопросами вам в дурку:8ball:')
     elif x==10:
-        await message.channel.send(ping + ', даже не знаю что ответить, да или нет:8ball:')
+        await message.channel.send(ping + ', черт возьми! Да! Так оно и есть!:8ball:')
 
 
 from random import randint
-@bot.command()
-async def tryy(message,arg):
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(4, 30, commands.BucketType.user)
+async def tryy(message,*,text=None):
     id = message.author.id
     ping = "<@"+str(id)+">"
     x= randint(1,2)
-    if x==1:
-        await message.channel.send(ping +', ' + arg + ' | **Удачно**')
-    if x==2:
-        await message.channel.send(ping +', ' + arg + '| **Неудачно**')
+    if text==None:
+        await message.channel.send("""
+**Информация по команде: **!tryy
+Команда используемая для Role Play моментов в которой вам нужно описать действие, а рандом решит: Удачно или Неудачно
+**Пример использования команды:**
+`!tryy попытался подняться`
+**Пример ответа:** 
+**Siniy** попытался подняться | **Неудачно  ** 
+""")
+    else:
+        if x==1:
+            await message.channel.send(ping + text+ ' | **Удачно**')
+        if x==2:
+            await message.channel.send(ping + text + '| **Неудачно**')
 
 from random import randint
-@bot.command()
+@bot.command(cls = CommandWithCooldown)
+@commands.cooldown(4, 30, commands.BucketType.user)
 async def roll(message, xx=None, yy=None):
     if xx==None or yy==None:
-        await message.channel.send(':game_die: Введите два числа! :game_die:')
+        await message.channel.send("""
+**Информация по команде: **!roll
+Рандомайзер чисел в диапазоне от x до y
+**Пример использования команды:**
+`!roll 10 45`
+**Пример ответа:**
+:game_die: Результат: 34 :game_die:
+""")
     else:
         x=int(xx)
         y=int(yy)
