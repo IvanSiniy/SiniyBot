@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
+from random import randint
 TOKEN = 'Njk2MDUwNzU2OTQ3NjczMTA4.Xom9sw.xr1VsHitF9TBSV3CWaQQc5DohT4'
 prefix = '!'
 bot = commands.Bot(command_prefix= prefix)
 bot.remove_command('help')
+
 @bot.event
 async def on_ready():
     print('------')
@@ -11,6 +13,12 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+
+
+@bot.command()
+async def command_not_found(message):
+    await message.channel.send('Команда не найдена! Введите !help для просмотра списка команд')
+
 class CommandWithCooldown(commands.Command):
     async def prepare(self, message):
         try:
@@ -18,177 +26,137 @@ class CommandWithCooldown(commands.Command):
         except commands.CommandOnCooldown:
             await message.channel.send('Подождите 30 секунд прежде чем использовать команду снова!')
 
-@bot.command(cls = CommandWithCooldown)
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
+@commands.cooldown(5, 30, commands.BucketType.user)
+async def info(message, user = discord.User):
+    embed = discord.Embed(title= '', description= '', color=0xeee657, inline = False)
+    embed.add_field(name = "**!copy**", value= 'Для получения информации о команде введите !copy', inline=False)
+    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    await message.channel.send(embed = embed)
+
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def copy(ctx,*, txt=None):
     if txt==None:
-        await ctx.send('''
-**Информация о команде:** !copy
-Повторю сообщение которое вы написали, при этом удаляя его!
-**Пример использования команды:**
-`!copy Привет!`
-''')
+        embed = discord.Embed(title= 'Команда: !copy', description= """
+**Описание:** Повторю сообщение которое вы написали, при этом удаляя его!
+**Кулдаун:** 5 сообщений за 30 секунд
+**Использование:** !сopy [ТЕКСТ]
+**Пример использования: **!copy Привет!""", color=0xeee657, inline = False)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        await ctx.channel.send(embed = embed)
     else:
         await ctx.message.delete()
-        await ctx.send(txt)
+        await ctx.channel.send(txt)
 
-@bot.command(cls = CommandWithCooldown)
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(2, 30, commands.BucketType.user)
 async def hello(message):
-    id = message.author.id
-    ping = "<@"+str(id)+">"
-    await message.channel.send(":smiley: :wave: Привет ," + ping + '!')
+    await message.channel.send(":smiley: :wave: Привет ," + '{}'.format(message.author.mention) + '!')
 
 
-@bot.command(cls = CommandWithCooldown)
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(3, 30, commands.BucketType.user)
 async def say(message, channel : discord.TextChannel, *args,):
     if not channel or not args:
-        await message.channel.send("""
-**Информация по команде: **!say
-Команда используемая для отправки указанного вами сообщения от **моего электронного лица** в указанный вами канал.
-**Пример использования команды:**
-`!say #канал-для-приветов Привет! `
-""")
+        embed = discord.Embed(title= 'Команда: !say', description= "**Описание:** Отправляет указанное вами сообщение в указанный вами канал\n**Кулдаун:** 3 сообщений за 30 секунд\n**Использование:** !say #канал [TEКСТ]\n**Пример использования:** !say #канал-для-приветов Привет!", color=0xeee657, inline = False)
+        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        await message.channel.send(embed = embed)
     else:
         await message.message.delete()
         text = ' '
         for item in args:
             text = text + item + ' '
         await channel.send(text)
-@bot.command()
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 async def help(message):
     embed = discord.Embed(title= 'Siniy Bot', description= 'Cписок доступных **основных** команд:', color=0xeee657)
-    embed.add_field(name="**!copy**", value= 'Для получения информации о команде введите !copy', inline=False)
-    embed.add_field(name="**!say**", value= 'Для получения информации о команде введите !say ', inline=False)
-    embed.add_field(name="**!hello**", value= 'При вызове команды я с вами поздороваюсь :3', inline=False)
-    embed.add_field(name="**!moder_help**", value= 'Пока недоступно', inline=False)
-    embed.add_field(name="**!ball**", value= 'Для получения информации о команде введите !ball', inline=False)
-    embed.add_field(name="**!tryy**", value= 'Для получения информации о команде введите !tryy', inline=False)
-    embed.add_field(name="**!roll**", value= 'Для получения информации о команде введите !roll', inline=False)
-    embed.add_field(name="**Invite**", value= '[Invite Link]<https://discordapp.com/oauth2/authorize?client_id=696050756947673108&scope=bot&permissions=7232>', inline=False)
+    embed.add_field(name="!copy", value= 'Для получения информации о команде введите !copy', inline=False)
+    embed.add_field(name="!say", value= 'Для получения информации о команде введите !say ', inline=False)
+    embed.add_field(name="!hello", value= 'При вызове команды я с вами поздороваюсь :3', inline=False)
+    embed.add_field(name="!moder_help", value= 'Пока недоступно', inline=False)
+    embed.add_field(name="!ball", value= 'Для получения информации о команде введите !ball', inline=False)
+    embed.add_field(name="!roll", value= 'Для получения информации о команде введите !roll', inline=False)
+    embed.add_field(name="Invite", value= '[Invite Link]\nhttps://discordapp.com/oauth2/authorize?client_id=696050756947673108&scope=bot&permissions=7232', inline=False)
     await message.channel.send(embed=embed)
 
-from random import randint
+
 @bot.command(cls = CommandWithCooldown)
 @commands.cooldown(10, 30, commands.BucketType.user)
 async def cnb(message, yy = None):
     x= randint(1, 3)
-    if yy == None or yy!= '1' or yy!= '2' or yy!= '3':
-         await message.channel.send("""
-**Информация по команде: **!cnb
-Это классическая игра "Камень, Ножницы, Бумага!"
-Для начала игры выберите одну из цифр: 1 , 2 или 3.
-1- Камень, 2-Ножницы , 3-Бумага
-**Пример использования команды:**
-`!cnb 1`
-**Пример ответа:**
-Камень vs Бумаги! Ты проиграл!     
-""")
-    else:
+    embed = discord.Embed(title= '', description= "", color=0xeee657, inline = False)
+    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    if yy != None and yy == '1' or yy == '2' or yy == '3':
         y= int(yy)
     #lose
         if x == 1 and y == 2:
-            await message.channel.send("Ножцницы vs Камня! Ты проиграл!")
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Камня!\n Ты проиграл!')
         elif x == 2 and y == 3:
-            await message.channel.send("Бумага vs Ножниц! Ты проиграл!")
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Ножниц!\nТы проиграл!')
         elif x == 3 and y == 1:
-            await message.channel.send("Камень vs Бумаги! Ты проиграл!")
+            embed.add_field(name='Результат игры:', value = 'Камень vs Бумаги!\nТы проиграл!')
     #won
         elif x == 2 and y == 1:
-            await message.channel.send("Камень vs Ножниц! Ты победил!")
+            embed.add_field(name='Результат игры:', value = 'Камень vs Ножниц!\nТы победил!')
         elif x == 3 and y == 2:
-            await message.channel.send("Ножницы vs Бумаги! Ты победил!")
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Бумаги!\nТы победил!')
         elif x == 1 and y == 3:
-            await message.channel.send("Бумага vs Камня! Ты победил!")
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Камня!\nТы победил!')
     #draw
         elif x == 1 and y == 1:
-            await message.channel.send("Камень vs Камня! Ничья!")
+            embed.add_field(name='Результат игры:', value = 'Камень vs Камня!\nНичья!')
         elif x == 2 and y == 2:
-            await message.channel.send("Ножницы vs Ножниц! Ничья!")
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Ножниц!\nНичья!')
         elif x == 3 and y == 3:
-            await message.channel.send("Бумага vs Бумаги! Ничья!")
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Бумаги!\nНичья!')
+    else:
+        embed.add_field(name = 'Команда: !cnb', value = '''
+**Описание:** Классическая игра "Камень, Ножницы, Бумага!"
+**Кулдаун:** 10 сообщений за 30 секунд
+**Использование:** !cnb (1-3)
+**Пример использования:** !cnb 1''')
+    await message.channel.send(embed = embed)
 
-from random import randint
-@bot.command(cls = CommandWithCooldown)
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(6, 30, commands.BucketType.user)
 async def ball(message,*, soob=None):
-    x = randint(1, 10)
-    id = message.author.id
-    ping = "<@"+str(id)+">"
+    spisok = [', абсолютно верно:8ball:', ', судя по моей информации, нет:8ball:', ', я не уверен, спросите еще раз:8ball:',
+    ', в базе данных произошла ошибка, повторите вопрос:8ball:', ', скорее да, чем нет:8ball:',
+    ', ну вообще да, но как бы нет:8ball:', ', в базе данных произошла ошибка, повторите вопрос:8ball:',
+    ', в теории да, на практике еще не известно:8ball:', ', полностью уверен что нет:8ball:', ', у вас все в порядке?С такими вопросами вам в дурку:8ball:',
+    ', черт возьми! Да! Так оно и есть!:8ball:']
+    l = len(spisok)
+    x = randint(0, l-1)
     if soob==None:
-        await message.channel.send("""
-**Информация по команде: **!ball
-Типичный шарлатанский шарик встряхивая который вы получаете ответ на свой вопрос.
-Задавать вопрос нужно так, что бы я мог ответить: Да / Нет
-**Пример использования команды:**
-`!ball Я котик?`
-**Пример ответа:**
-**Siniy**, черт возьми! Да! Так оно и есть!:8ball:
-""")
-    elif x==1:
-        await  message.channel.send(ping + ', абсолютно верно:8ball:')
-    elif x==2:
-        await  message.channel.send(ping + ', судя по моей информации, нет:8ball:')
-    elif x==3:
-        await message.channel.send(ping + ', я не уверен, спросите еще раз:8ball:')
-    elif x==4:
-        await message.channel.send(ping + ', в базе данных произошла ошибка, повторите вопрос:8ball:')
-    elif x==5:
-        await message.channel.send(ping + ', скорее да, чем нет:8ball:')
-    elif x==6:
-        await message.channel.send(ping + ', ну вообще да, но как бы нет:8ball:')
-    elif x==7:
-        await message.channel.send(ping + ', в теории да, на практике еще не известно:8ball:')
-    elif x==8:
-        await message.channel.send(ping + ', полностью уверен что нет:8ball:')
-    elif x==9:
-        await message.channel.send(ping + ', у вас все в порядке?С такими вопросами вам в дурку:8ball:')
-    elif x==10:
-        await message.channel.send(ping + ', черт возьми! Да! Так оно и есть!:8ball:')
+        embed = discord.Embed(title= 'Команда: !ball', description= "**Описание:** Типичный шарлатанский шарик встряхивая который вы получаете ответ на свой вопрос.\nЗадавать вопрос нужно так, что бы я мог ответить: Да / Нет\n**Кулдаун:** 6 сообщений за 30 секунд\n**Использование:** !ball [TEКСТ]\n**Пример использования:** !ball Я котик?", color=0xeee657, inline = False)
+        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        await message.channel.send(embed = embed)
+    else:
+        await message.channel.send('{}'.format(message.author.mention) + str(spisok[x]))
 
 
-from random import randint
-@bot.command(cls = CommandWithCooldown)
+@bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(4, 30, commands.BucketType.user)
-async def tryy(message,*,text=None):
-    id = message.author.id
-    ping = "<@"+str(id)+">"
-    x= randint(1,2)
-    if text==None:
-        await message.channel.send("""
-**Информация по команде: **!tryy
-Команда используемая для Role Play моментов в которой вам нужно описать действие, а рандом решит: Удачно или Неудачно
-**Пример использования команды:**
-`!tryy попытался подняться`
-**Пример ответа:** 
-**Siniy** попытался подняться | **Неудачно  ** 
+async def roll(message, yy=None):
+    embed = discord.Embed(title= '', description= "", color=0xeee657, inline = False)
+    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    if yy==None:
+        embed.add_field(name = 'Команда: !roll', value = """
+**Описание:** Рандомайзер чисел в диапазоне от 1 до х
+**Кулдаун:** 4 сообщения за 30 секунд
+**Использование:** !roll [число]
+**Пример использования**: !roll 45
 """)
     else:
-        if x==1:
-            await message.channel.send(ping + text+ ' | **Удачно**')
-        if x==2:
-            await message.channel.send(ping + text + '| **Неудачно**')
-
-from random import randint
-@bot.command(cls = CommandWithCooldown)
-@commands.cooldown(4, 30, commands.BucketType.user)
-async def roll(message, xx=None, yy=None):
-    if xx==None or yy==None:
-        await message.channel.send("""
-**Информация по команде: **!roll
-Рандомайзер чисел в диапазоне от x до y
-**Пример использования команды:**
-`!roll 10 45`
-**Пример ответа:**
-:game_die: Результат: 34 :game_die:
-""")
-    else:
-        x=int(xx)
         y=int(yy)
-        r=randint(x,y)
-        res= str(r)
-        await message.channel.send(':game_die: Результат: '+res+' :game_die:')
+        r=randint(1,y)
+        embed.add_field(name = 'Результат:', value = ':game_die: {}'.format(r)+' :game_die:')
+    await message.channel.send(embed = embed)
 #----------------------------------------------------------------#
 # moderation command
 import typing
