@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from random import randint
+import time
 TOKEN = 'Njk2MDUwNzU2OTQ3NjczMTA4.Xom9sw.xr1VsHitF9TBSV3CWaQQc5DohT4'
 prefix = '!'
 bot = commands.Bot(command_prefix= prefix)
@@ -15,10 +16,6 @@ async def on_ready():
     print('------')
 
 
-@bot.command()
-async def command_not_found(message):
-    await message.channel.send('Команда не найдена! Введите !help для просмотра списка команд')
-
 class CommandWithCooldown(commands.Command):
     async def prepare(self, message):
         try:
@@ -27,18 +24,84 @@ class CommandWithCooldown(commands.Command):
             await message.channel.send('Подождите 30 секунд прежде чем использовать команду снова!')
 
 
+@bot.command(pass_context=True)
+async def clear( ctx, amount=None):
+    print(ctx.author, 'used command "clear"')
+    if amount == None:
+        embed = discord.Embed( color=0xeee657, inline = False)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        embed.add_field(name = 'Информация о команде: !clear', value = '''
+**Описание:** Удаляет указанное количество сообщений в канале (Не трогая закрепленные)
+**Использование:** !clear [КОЛ-ВО]
+**Пример использования: **!clear 10
+''')
+    else:
+        if ctx != ctx.message.pin:
+            await ctx.channel.purge(limit=int(amount))
+        embed = discord.Embed( color=0xeee657, inline = False)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        embed.add_field(name = 'Выполнение команды', value = 'Было удалено {} сообщений :white_check_mark:'.format(amount))
+    await ctx.channel.send(embed = embed)
+
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
-async def info(message, user = discord.User):
-    embed = discord.Embed(title= '', description= '', color=0xeee657, inline = False)
-    embed.add_field(name = "**!copy**", value= 'Для получения информации о команде введите !copy', inline=False)
-    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+async def user(message, user: discord.Member = None):
+    print(message.author, 'used command "user"')
+    if user == None:
+        user = message.author
+    mis = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря']
+    embed = discord.Embed( color=0xeee657, inline = False)
+    embed.add_field(name = 'ID Пользователя',value='{}'.format(user.id), inline=False)
+    at = str(user.joined_at)
+    mou = str(mis[int(at[5]+at[6])-1])
+    date =at[11]+at[12]+at[13]+at[14]+at[15]+ '   ' +at[8]+at[9]+' '+mou+' '+'20'+at[2]+at[3]
+    embed.add_field(name = 'Присоединился к серверу',value='{}'.format(date), inline=False)
+    at = str(user.created_at)
+    mou = str(mis[int(at[5]+at[6])-1])
+    date =at[11]+at[12]+at[13]+at[14]+at[15]+ '   ' +at[8]+at[9]+' '+mou+' '+'20'+at[2]+at[3]
+    embed.add_field(name = 'Создан аккаунт в дискорд',value='{}'.format(date), inline=False)
+    embed.add_field(name = 'Самая высокая роль',value='{}'.format(user.top_role.mention), inline=False)
+    embed.set_author(name = user, icon_url = user.avatar_url)
+    embed.set_thumbnail(url = user.avatar_url)
     await message.channel.send(embed = embed)
 
 
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
+async def role(message, role: discord.Role = None):
+    print(message.author, 'used command "role"')
+    mis = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря']
+    if role == None:
+        embed = discord.Embed( color=0xeee657, inline = False)
+        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed.add_field(name = 'Информация о команде: !role', value = '''
+**Описание:** Выдает информацию о роли
+**Использование:** !role [РОЛЬ]
+**Пример использования: **!role @МояРоль
+''')
+    else:
+        embed = discord.Embed(description = '{}'.format(role.mention) , color=0xeee657, inline = False)
+        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed.add_field(name = 'ID Роли',value='{}'.format(role.id), inline=False)
+        at = str(role.created_at)
+        mou = str(mis[int(at[5]+at[6])-1])
+        date =at[11]+at[12]+at[13]+at[14]+at[15]+ '   ' +at[8]+at[9]+' '+mou+' '+'20'+at[2]+at[3]
+        embed.add_field(name = 'Дата создания роли',value='{}'.format(date), inline=False)
+        embed.add_field(name = 'Количество людей имеющих роль',value='{}'.format(len(role.members)), inline=False)
+        embed.add_field(name = 'Цвет роли',value='{}'.format(role.colour), inline=False)
+    await message.channel.send(embed = embed)
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
+@commands.cooldown(5, 30, commands.BucketType.user)
+async def invite(ctx):
+    print(ctx.author, 'used command "invite"')
+    await ctx.channel.send('Ссылка на приглашение: https://discordapp.com/oauth2/authorize?client_id=696050756947673108&scope=bot&permissions=7232')
+
+
+@bot.command(cls = CommandWithCooldown, pass_context = True)
+@commands.cooldown(5, 30, commands.BucketType.user)
 async def copy(ctx,*, txt=None):
+    print(ctx.author, 'used command "copy"')
     if txt==None:
         embed = discord.Embed(title= 'Команда: !copy', description= """
 **Описание:** Повторю сообщение которое вы написали, при этом удаляя его!
@@ -55,12 +118,14 @@ async def copy(ctx,*, txt=None):
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(2, 30, commands.BucketType.user)
 async def hello(message):
+    print(message.author, 'used command "hello"')
     await message.channel.send(":smiley: :wave: Привет ," + '{}'.format(message.author.mention) + '!')
 
 
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(3, 30, commands.BucketType.user)
 async def say(message, channel : discord.TextChannel, *args,):
+    print(message.author, 'used command "say"')
     if not channel or not args:
         embed = discord.Embed(title= 'Команда: !say', description= "**Описание:** Отправляет указанное вами сообщение в указанный вами канал\n**Кулдаун:** 3 сообщений за 30 секунд\n**Использование:** !say #канал [TEКСТ]\n**Пример использования:** !say #канал-для-приветов Привет!", color=0xeee657, inline = False)
         embed.set_author(name = message.author, icon_url = message.author.avatar_url)
@@ -71,24 +136,28 @@ async def say(message, channel : discord.TextChannel, *args,):
         for item in args:
             text = text + item + ' '
         await channel.send(text)
+
+
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 async def help(message):
+    print(message.author, 'used command "help"')
     embed = discord.Embed(title= 'Siniy Bot', description= 'Cписок доступных **основных** команд:', color=0xeee657)
+    embed.add_field(name="!user", value= 'Для получения информации о команде введите !user', inline=False)
+    embed.add_field(name="!role", value= 'Для получения информации о команде введите !role', inline=False)
+    embed.add_field(name="!clear", value= 'Для получения информации о команде введите !clear', inline=False)
     embed.add_field(name="!copy", value= 'Для получения информации о команде введите !copy', inline=False)
     embed.add_field(name="!say", value= 'Для получения информации о команде введите !say ', inline=False)
-    embed.add_field(name="!hello", value= 'При вызове команды я с вами поздороваюсь :3', inline=False)
-    embed.add_field(name="!moder_help", value= 'Пока недоступно', inline=False)
     embed.add_field(name="!ball", value= 'Для получения информации о команде введите !ball', inline=False)
     embed.add_field(name="!roll", value= 'Для получения информации о команде введите !roll', inline=False)
-    embed.add_field(name="Invite", value= '[Invite Link]\nhttps://discordapp.com/oauth2/authorize?client_id=696050756947673108&scope=bot&permissions=7232', inline=False)
     await message.channel.send(embed=embed)
 
 
 @bot.command(cls = CommandWithCooldown)
 @commands.cooldown(10, 30, commands.BucketType.user)
 async def cnb(message, yy = None):
+    print(message.author, 'used command "cnb"')
     x= randint(1, 3)
-    embed = discord.Embed(title= '', description= "", color=0xeee657, inline = False)
+    embed = discord.Embed(color=0xeee657, inline = False)
     embed.set_author(name = message.author, icon_url = message.author.avatar_url)
     if yy != None and yy == '1' or yy == '2' or yy == '3':
         y= int(yy)
@@ -125,6 +194,7 @@ async def cnb(message, yy = None):
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(6, 30, commands.BucketType.user)
 async def ball(message,*, soob=None):
+    print(message.author, 'used command "ball"')
     spisok = [', абсолютно верно:8ball:', ', судя по моей информации, нет:8ball:', ', я не уверен, спросите еще раз:8ball:',
     ', в базе данных произошла ошибка, повторите вопрос:8ball:', ', скорее да, чем нет:8ball:',
     ', ну вообще да, но как бы нет:8ball:', ', в базе данных произошла ошибка, повторите вопрос:8ball:',
@@ -143,7 +213,8 @@ async def ball(message,*, soob=None):
 @bot.command(cls = CommandWithCooldown, pass_context = True)
 @commands.cooldown(4, 30, commands.BucketType.user)
 async def roll(message, yy=None):
-    embed = discord.Embed(title= '', description= "", color=0xeee657, inline = False)
+    print(message.author, 'used command "roll"')
+    embed = discord.Embed(color=0xeee657, inline = False)
     embed.set_author(name = message.author, icon_url = message.author.avatar_url)
     if yy==None:
         embed.add_field(name = 'Команда: !roll', value = """
@@ -157,18 +228,6 @@ async def roll(message, yy=None):
         r=randint(1,y)
         embed.add_field(name = 'Результат:', value = ':game_die: {}'.format(r)+' :game_die:')
     await message.channel.send(embed = embed)
-#----------------------------------------------------------------#
-# moderation command
-import typing
-@bot.command()
-async def ban_nach(message, members: commands.Greedy[discord.Member],
-                delete_days: typing.Optional[int] = 0,*,
-                reason=None):
-    if reason == None:
-        await message.channel.send('Укажите причину!')
-    else:
-        for member in members:
-            await member.ban(delete_message_days=delete_days, reason=reason)
-            await message.channel.send('Пользователь был забанен по причине: '+reason)
+
 bot.run(TOKEN)     
  
