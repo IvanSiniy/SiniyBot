@@ -16,11 +16,6 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    handle = open("botlog.txt", 'a')
-    today = datetime.datetime.today()
-    write = today.strftime("[%d/%m/%Y %H:%M]")+' BOT START'+'\n'
-    handle.write(write)
-    handle.close()
 
 @bot.event
 async def on_command_error(ctx, error):
