@@ -5,7 +5,7 @@ import random
 from random import randint
 import time
 import datetime
-TOKEN = 'ODA5MzY5MTA1MjA3MTMyMjEw.YCUFuA._geaVjCe-KUPhXfHHUUOOgigAec'
+TOKEN = 'ODA5MzY5MTA1MjA3MTMyMjEw.YCUFuA.TmhWT1eD2pqwKTdjM4hT8TEOD28'
 prefix = 's!'
 bot = commands.Bot(command_prefix= prefix)
 bot.remove_command('help')
