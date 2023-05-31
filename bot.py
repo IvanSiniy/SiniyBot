@@ -1,13 +1,16 @@
 import discord
+import asyncio
 from discord.ext import commands
 from discord.ext.commands import has_permissions, MissingPermissions
 import random
 from random import randint
 import time
 import datetime
-TOKEN = 'ODA5MzY5MTA1MjA3MTMyMjEw.YCUFuA.TmhWT1eD2pqwKTdjM4hT8TEOD28'
-prefix = 's!'
-bot = commands.Bot(command_prefix= prefix)
+TOKEN = 'Njk2MDUwNzU2OTQ3NjczMTA4.GJ2EcW.PGcZMKjPhQjwccKYKDKHTqt4IHXMCP6QnAUKKc'
+intents = discord.Intents.all()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!',intents = intents)
+
 bot.remove_command('help')
 @bot.event
 async def on_ready():
@@ -23,17 +26,19 @@ async def on_command_error(ctx, error):
         await ctx.send('Вы можете использовать команду через {} секунд'.format(round(error.retry_after, 2)))
     if isinstance(error, MissingPermissions):
         await ctx.send('У вас недостаточно прав!')
+    else:
+        await ctx.send(f'Произошла ошибка: {error}')
 
 @bot.command(pass_context=True)
 @has_permissions(manage_messages = True)
 async def clear(message , amount=None):
     today = datetime.datetime.today()
-    embed = discord.Embed( color=0xeee657, inline = False)
+    embed = discord.Embed( color=0xeee657)
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
-    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    embed.set_author(name = message.author, icon_url = message.author.avatar)
     if amount == None:
         embed.add_field(name = 'Информация о команде: clear', 
-        value = '**Описание:** Удаляет указанное количество сообщений в канале (Не трогая закрепленные)\n**Использование:** `s!clear [КОЛ-ВО]`\n**Пример использования: **`s!clear 10`')
+        value = '**Описание:** Удаляет указанное количество сообщений в канале (Не трогая закрепленные)\n**Использование:** `!clear [КОЛ-ВО]`\n**Пример использования: **`!clear 10`')
     else:
         await message.channel.purge(limit=int(amount), check=lambda msg: not msg.pinned)
         embed.add_field(name = 'Выполнение команды', value = 'Было удалено {} сообщений :white_check_mark:'.format(amount))
@@ -44,8 +49,8 @@ async def clear(message , amount=None):
 async def user(message, user: discord.Member = None):
     if user == None:
         user = message.author
-    embed = discord.Embed( color=0xeee657, inline = False)
-    embed.add_field(name = 'ID Пользователя',value='{}'.format(user.id), inline=False)
+    embed = discord.Embed(type="rich", colour=discord.Color.blurple())
+    embed.add_field(name = 'ID Пользователя',value='{}'.format(user.id))
     embed.add_field(name = 'Присоединился к серверу',value='{}'.format(user.joined_at.__format__('%d/%m/%Y %H:%M')), inline=False)
     embed.add_field(name = 'Создан аккаунт в дискорд',value='{}'.format(user.created_at.__format__('%d/%m/%Y %H:%M')), inline=False)
     embed.add_field(name = 'Самая высокая роль',value='{}'.format(user.top_role.mention), inline=False)
@@ -54,25 +59,39 @@ async def user(message, user: discord.Member = None):
         roles.append(x.name)
     roles.reverse()
     embed.add_field(name = 'Роли[{}]'.format(len(user.roles)),value='{}'.format(", ".join(map(str, roles))), inline=False)
-    embed.set_author(name = user, icon_url = user.avatar_url)
-    embed.set_thumbnail(url = user.avatar_url)
+    embed.set_author(name = user, icon_url = user.avatar)
+    embed.set_thumbnail(url = user.avatar)
     today = datetime.datetime.today()
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
     await message.channel.send(embed = embed)
     
+
+@bot.command(pass_context = True)
+@commands.cooldown(5, 30, commands.BucketType.user)
+async def таймер(ctx):
+    min=0
+    sec=60
+    emb = discord.Embed(type="rich", colour=discord.Color.blurple(), description= f'До конца: {min} мин. {sec} сек.')
+    message = await ctx.send(embed = emb)
+    while(sec != 0):
+        sec-=1
+        embed = discord.Embed(type="rich", colour=discord.Color.blurple(), description= f'До конца: {min} мин. {sec} сек.')
+        await message.edit(embed = embed)
+        await asyncio.sleep(1) 
+
 @bot.command(pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def server(message, guild : discord.Guild = None):
     guild = message.author.guild
-    embed = discord.Embed( color=0xeee657, inline = False)
+    embed = discord.Embed( color=0xeee657)
     embed.add_field(name = 'ID Сервера',value='{}'.format(guild.id), inline=False)
     embed.add_field(name = 'Владелец',value='<@{}>'.format(guild.owner_id), inline=False)
     embed.add_field(name = 'Сервер создан',value='{}'.format(guild.created_at.__format__('%d/%m/%Y %H:%M')), inline=False)
     embed.add_field(name = 'Категории и каналы',value='Категорий: {}\nКаналов: {} ({} текстовых | {} голосовых)'.format(len(guild.categories),len(guild.channels)-len(guild.categories),len(guild.text_channels),len(guild.voice_channels)), inline=False)
     embed.add_field(name = 'Количество участников',value='{}'.format(len(guild.members)), inline=False)
     embed.add_field(name = 'Количество ролей',value='{}'.format(len(guild.roles)), inline=False)
-    embed.set_author(name = guild.name, icon_url = guild.icon_url)
-    embed.set_thumbnail(url = guild.icon_url)
+    embed.set_author(name = guild.name, icon_url = guild.icon)
+    embed.set_thumbnail(url = guild.icon)
     today = datetime.datetime.today()
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
     await message.channel.send(embed = embed)
@@ -82,14 +101,14 @@ async def server(message, guild : discord.Guild = None):
 async def role(message, role: discord.Role = None):
     today = datetime.datetime.today()
     if role == None:
-        embed = discord.Embed( color=0xeee657, inline = False)
-        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed = discord.Embed( color=0xeee657)
+        embed.set_author(name = message.author, icon_url = message.author.avatar)
         embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
         embed.add_field(name = 'Информация о команде: role', 
-        value = '**Описание:** Выдает информацию о роли\n**Использование:** `s!role [РОЛЬ]`\n**Пример использования: **`s!role @МояРоль`')
+        value = '**Описание:** Выдает информацию о роли\n**Использование:** `!role [РОЛЬ]`\n**Пример использования: **`!role @МояРоль`')
     else:
-        embed = discord.Embed(description = '{}'.format(role.mention) , color=0xeee657, inline = False)
-        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed = discord.Embed(description = '{}'.format(role.mention) , color=0xeee657)
+        embed.set_author(name = message.author, icon_url = message.author.avatar)
         embed.add_field(name = 'ID',value='{}'.format(role.id), inline=False)
         embed.add_field(name = 'Дата создания',value='{}'.format(role.created_at.__format__('%d/%m/%Y %H:%M')), inline=False)
         embed.add_field(name = 'Позиция',value='{}/{}'.format(len(message.author.guild.roles)-role.position, len(message.author.guild.roles)), inline=False)
@@ -100,7 +119,7 @@ async def role(message, role: discord.Role = None):
 @bot.command(pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def invite(message):
-    await message.channel.send('Ссылка на приглашение: <https://discord.com/oauth2/authorize?client_id=809369105207132210&scope=bot&permissions=2683698256>')
+    await message.channel.send('Ссылка на приглашение: <https://discord.com/api/oauth2/authorize?client_id=696050756947673108&permissions=8&redirect_uri=https%3A%2F%2Fdiscordapp.com%2Foauth2%2Fauthorize%3F%26client_id%3D696050756947673108%26scope%3Dbot&response_type=code&scope=messages.read%20applications.commands%20bot>')
     
 @bot.command(pass_context = True)
 @commands.cooldown(5, 30, commands.BucketType.user)
@@ -108,9 +127,9 @@ async def copy(message,*, txt=None):
     today = datetime.datetime.today()
     if txt==None:
         embed = discord.Embed(title= 'Команда: copy', 
-        description= "**Описание:** Повторю сообщение которое вы написали, при этом удаляя егоs!\n**Кулдаун:** 5 сообщений за 30 секунд\n**Использование:** `s!сopy [ТЕКСТ]`\n**Пример использования: **`s!copy Приветs!`",
-        color=0xeee657, inline = False)
-        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        description= "**Описание:** Повторю сообщение которое вы написали, при этом удаляя его!\n**Кулдаун:** 5 сообщений за 30 секунд\n**Использование:** `!сopy [ТЕКСТ]`\n**Пример использования: **`!copy Привет!`",
+        color=0xeee657)
+        embed.set_author(name = message.author, icon_url = message.author.avatar)
         embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
         await message.channel.send(embed = embed)
     else:
@@ -122,8 +141,8 @@ async def copy(message,*, txt=None):
 async def say(message, channel : discord.TextChannel, *args,):
     today = datetime.datetime.today()
     if not channel or not args:
-        embed = discord.Embed(title= 'Команда: say', description= "**Описание:** Отправляет указанное вами сообщение в указанный вами канал\n**Кулдаун:** 3 сообщений за 30 секунд\n**Использование:** `s!say #канал [TEКСТ]`\n**Пример использования:** `s!say #канал-для-приветов Приветs!`", color=0xeee657, inline = False)
-        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed = discord.Embed(title= 'Команда: say', description= "**Описание:** Отправляет указанное вами сообщение в указанный вами канал\n**Кулдаун:** 3 сообщений за 30 секунд\n**Использование:** `!say #канал [TEКСТ]`\n**Пример использования:** `!say #канал-для-приветов Привет!`", color=0xeee657)
+        embed.set_author(name = message.author, icon_url = message.author.avatar)
         embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
         await message.channel.send(embed = embed)
     else:
@@ -136,7 +155,7 @@ async def say(message, channel : discord.TextChannel, *args,):
 @bot.command(pass_context = True)
 async def help(message):
     embed = discord.Embed(title= 'Cписок доступный команд:', description= '''
-*Для получения детальной информации о команде введите:* `s!КОМАНДА`
+*Для получения детальной информации о команде введите:* `!КОМАНДА`
 `user` - Информация о пользователе
 `server` - Информация о сервере
 `role` - Информация о роли
@@ -155,36 +174,36 @@ async def help(message):
 @commands.cooldown(10, 30, commands.BucketType.user)
 async def cnb(message, yy = None):
     x= randint(1, 3)
-    embed = discord.Embed(color=0xeee657, inline = False)
-    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    embed = discord.Embed(color=0xeee657)
+    embed.set_author(name = message.author, icon_url = message.author.avatar)
     today = datetime.datetime.today()
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
     if yy != None and yy == '1' or yy == '2' or yy == '3':
         y= int(yy)
     #lose
         if x == 1 and y == 2:
-            embed.add_field(name='Результат игры:', value = 'Ножницы vs Камняs!\n Ты проигралs!')
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Камня!\n Ты проиграл!')
         elif x == 2 and y == 3:
-            embed.add_field(name='Результат игры:', value = 'Бумага vs Ножницs!\nТы проигралs!')
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Ножниц!\nТы проиграл!')
         elif x == 3 and y == 1:
-            embed.add_field(name='Результат игры:', value = 'Камень vs Бумагиs!\nТы проигралs!')
+            embed.add_field(name='Результат игры:', value = 'Камень vs Бумаги!\nТы проиграл!')
     #won
         elif x == 2 and y == 1:
-            embed.add_field(name='Результат игры:', value = 'Камень vs Ножницs!\nТы победилs!')
+            embed.add_field(name='Результат игры:', value = 'Камень vs Ножниц!\nТы победил!')
         elif x == 3 and y == 2:
-            embed.add_field(name='Результат игры:', value = 'Ножницы vs Бумагиs!\nТы победилs!')
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Бумаги!\nТы победил!')
         elif x == 1 and y == 3:
-            embed.add_field(name='Результат игры:', value = 'Бумага vs Камняs!\nТы победилs!')
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Камня!\nТы победил!')
     #draw
         elif x == 1 and y == 1:
-            embed.add_field(name='Результат игры:', value = 'Камень vs Камняs!\nНичьяs!')
+            embed.add_field(name='Результат игры:', value = 'Камень vs Камня!\nНичья!')
         elif x == 2 and y == 2:
-            embed.add_field(name='Результат игры:', value = 'Ножницы vs Ножницs!\nНичьяs!')
+            embed.add_field(name='Результат игры:', value = 'Ножницы vs Ножниц!\nНичья!')
         elif x == 3 and y == 3:
-            embed.add_field(name='Результат игры:', value = 'Бумага vs Бумагиs!\nНичьяs!')
+            embed.add_field(name='Результат игры:', value = 'Бумага vs Бумаги!\nНичья!')
     else:
         embed.add_field(name = 'Команда: cnb',
-        value = '**Описание:** Классическая игра "Камень, Ножницы, Бумагаs!"\n**Кулдаун:** 10 сообщений за 30 секунд\n**Использование:** `s!cnb (1-3)`\n**Пример использования:** `s!cnb 1`')
+        value = '**Описание:** Классическая игра "Камень, Ножницы, Бумага!"\n**Кулдаун:** 10 сообщений за 30 секунд\n**Использование:** `!cnb (1-3)`\n**Пример использования:** `!cnb 1`')
     await message.channel.send(embed = embed)
 
 @bot.command(pass_context = True)
@@ -194,12 +213,12 @@ async def ball(message,*, soob=None):
     ', в базе данных произошла ошибка, повторите вопрос:8ball:', ', скорее да, чем нет:8ball:',
     ', ну вообще да, но как бы нет:8ball:', ', в базе данных произошла ошибка, повторите вопрос:8ball:',
     ', в теории да, на практике еще не известно:8ball:', ', полностью уверен что нет:8ball:', ', у вас все в порядке?С такими вопросами вам в дурку:8ball:',
-    ', черт возьмиs! Даs! Так оно и естьs!:8ball:']
+    ', черт возьми! Да! Так оно и есть!:8ball:']
     l = len(spisok)
     x = randint(0, l-1)
     if soob==None:
-        embed = discord.Embed(title= 'Команда: ball', description= "**Описание:** Типичный шарлатанский шарик встряхивая который вы получаете ответ на свой вопрос.\nЗадавать вопрос нужно так, что бы я мог ответить: Да / Нет\n**Кулдаун:** 6 сообщений за 30 секунд\n**Использование:** `s!ball [TEКСТ]`\n**Пример использования:** `s!ball Я котик?`", color=0xeee657, inline = False)
-        embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+        embed = discord.Embed(title= 'Команда: ball', description= "**Описание:** Типичный шарлатанский шарик встряхивая который вы получаете ответ на свой вопрос.\nЗадавать вопрос нужно так, что бы я мог ответить: Да / Нет\n**Кулдаун:** 6 сообщений за 30 секунд\n**Использование:** `!ball [TEКСТ]`\n**Пример использования:** `!ball Я котик?`", color=0xeee657)
+        embed.set_author(name = message.author, icon_url = message.author.avatar)
         today = datetime.datetime.today()
         embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
         await message.channel.send(embed = embed)
@@ -209,19 +228,20 @@ async def ball(message,*, soob=None):
 @bot.command(pass_context = True)
 @commands.cooldown(4, 30, commands.BucketType.user)
 async def roll(message, yy=None):
-    embed = discord.Embed(color=0xeee657, inline = False)
-    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    embed = discord.Embed(color=0xeee657)
+    embed.set_author(name = message.author, icon_url = message.author.avatar)
     today = datetime.datetime.today()
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
     if yy==None:
         embed.add_field(name = 'Команда: roll', 
-        value = "**Описание:** Рандомайзер чисел в диапазоне от x до y или же выбирают случайную фразу из перечисленных вами\n**Кулдаун:** 4 сообщения за 30 секунд\n**Использование:** `s!roll [число] [число]`\n`s!roll [фраза] [фраза]`\n**Пример использования**: `s!roll 45`")
+        value = "**Описание:** Рандомайзер чисел в диапазоне от x до y или же выбирают случайную фразу из перечисленных вами\n**Кулдаун:** 4 сообщения за 30 секунд\n**Использование:** `!roll [число] [число]`\n`!roll [фраза] [фраза]`\n**Пример использования**: `!roll 45`")
     else:
-        rand = message.content.split()
-        if int(rand[0])==rand[0]:
+        rand = message.message.content.split()
+        rand.pop(0)
+        try:
             x,y = int(rand[0]),int(rand[1])
             r=randint(x,y)
-        else:
+        except:
             r = random.choice(rand)
         embed.add_field(name = 'Результат:', value = ':game_die: {}'.format(r)+' :game_die:')
     await message.channel.send(embed = embed)
@@ -230,8 +250,8 @@ async def roll(message, yy=None):
 @commands.cooldown(1, 15, commands.BucketType.user)
 async def gun(ctx, yy=None):
     message = ctx.message
-    embed = discord.Embed(color=0xeee657, inline = False)
-    embed.set_author(name = message.author, icon_url = message.author.avatar_url)
+    embed = discord.Embed(color=0xeee657)
+    embed.set_author(name = message.author, icon_url = message.author.avatar)
     today = datetime.datetime.today()
     embed.set_footer(text = 'BotSiniy© | {}'.format(today.strftime("%H:%M %d/%m/%Y")))
     embed.add_field(name = 'Команда: gun', 
@@ -418,7 +438,7 @@ async def army(ctx):
         time.sleep(3)
         await ctx.message.channel.send('Я проведу вам короткий свод моих умений! Первое - я могу раздавать вам снаряжение для тренировок(`*одел тренировочное снаряжение*`)')
         time.sleep(3)
-        await ctx.message.channel.send('Второе - Выступаю инструктором для прыжков с парашютом((`s!par_instr`))')
+        await ctx.message.channel.send('Второе - Выступаю инструктором для прыжков с парашютом((`!par_instr`))')
         time.sleep(3)
         await ctx.message.channel.send('((Забираю роли мертвого и ранений `*закончил тренировку*`')
         time.sleep(3)
